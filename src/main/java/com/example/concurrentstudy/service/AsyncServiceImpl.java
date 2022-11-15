@@ -6,6 +6,9 @@ import com.example.concurrentstudy.event.OrderEvent;
 import com.example.concurrentstudy.event.OrderModel;
 import com.example.concurrentstudy.utils.LambdaUtil;
 import com.example.concurrentstudy.utils.SpringUtil;
+import io.lettuce.core.api.coroutines.RedisTransactionalCoroutinesCommands;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
@@ -22,6 +25,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class AsyncServiceImpl implements AsyncService {
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @Override
     @Async("defaultThreadPoolExecutor")
     public Future<Integer> testAsync(int num, int sum) {
@@ -67,12 +73,7 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     public void testJson(JSONObject request) throws InterruptedException {
         Long id = request.getLong("id");
-        CompletableFuture<Void> future = CompletableFuture.runAsync(LambdaUtil.wrapRunnable2(() -> {
-            TimeUnit.MILLISECONDS.sleep(200);
-            System.out.println("运行在一个单独的进程中");
-
-            long i = 1 / id;
-            System.out.println(i);
-        }));
+        redisTemplate.opsForValue().set("id", id);
+        System.out.println(redisTemplate.opsForValue().get("id"));
     }
 }
